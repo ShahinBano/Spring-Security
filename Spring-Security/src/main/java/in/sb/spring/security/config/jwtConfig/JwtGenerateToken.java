@@ -48,6 +48,7 @@ public class JwtGenerateToken
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
                 .claim("scope", permissions)
+                .subject(authentication.getName())
                 .build();
 
         String tokenValue = jwtEncoder.encode(JwtEncoderParameters.from(jwtClaims)).getTokenValue();
