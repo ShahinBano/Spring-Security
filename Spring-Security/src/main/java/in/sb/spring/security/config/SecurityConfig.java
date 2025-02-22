@@ -6,12 +6,16 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import in.sb.spring.security.config.jwtConfig.JwtAccessTokenFilter;
+import in.sb.spring.security.config.jwtConfig.JwtTokenUtils;
 import in.sb.spring.security.config.userConfig.UserInfoManageConfig;
+import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,6 +29,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -35,11 +40,13 @@ public class SecurityConfig
 
     private  final UserInfoManageConfig userInfoManageConfig;
     private final RSAKeyRecord rsaKeyRecord;
+    private final JwtTokenUtils jwtTokenUtils;
 
     @Autowired
-    public SecurityConfig(UserInfoManageConfig userInfoManageConfig, RSAKeyRecord rsaKeyRecord) {
+    public SecurityConfig(UserInfoManageConfig userInfoManageConfig, RSAKeyRecord rsaKeyRecord, JwtTokenUtils jwtTokenUtils) {
         this.userInfoManageConfig = userInfoManageConfig;
         this.rsaKeyRecord = rsaKeyRecord;
+        this.jwtTokenUtils = jwtTokenUtils;
     }
 
 
@@ -52,6 +59,7 @@ public class SecurityConfig
                 //.userDetailsService(userInfoManageConfig)
                 .oauth2ResourceServer(oauth2->oauth2.jwt(Customizer.withDefaults()))
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new JwtAccessTokenFilter(jwtTokenUtils,rsaKeyRecord), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex->{
                     ex.authenticationEntryPoint((request, response, authException) ->
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage()));
