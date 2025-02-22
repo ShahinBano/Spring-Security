@@ -24,3 +24,6 @@ logging:
     org:
       springframework:
         security: trace
+jwt:
+  rsa-private-key: classpath:certs/private_key.pem
+  rsa-public-key: classpath:certs/public_key.pem
